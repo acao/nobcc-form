@@ -1,43 +1,47 @@
-import React, { Component } from "react"
-import MembershipForm from '../forms/Membership'
+import React from 'react'
+import { Field } from 'react-redux'
+import { renderInput } from '../components/Fields'
+import WizardStep from '../components/WizardStep'
+import config from '../config.js'
 
-const membershipSelector = ({ input, meta: { touched, error } }) => (
-  <div>
-    <select {...input}>
-      <option value="">Select a color...</option>
-      {colors.map(val => <option value={val} key={val}>{val}</option>)}
-    </select>
+const MembershipSelector = ({ input, meta: { touched, error }, ...custom }) => (
+  <div className="form-item field">
+    {colors.map(val => <input {...input} value={val} key={val} {...custom}></input>)}
+    {touched && error && <span>{error}</span>}
+  </div>
+)
+function getSelections({ label, value }, input, key) {
+  return (
+    <div key={key} style={{margin: 6}}>
+      <label>
+        <input
+          style={{margin: 6}}
+          type="radio"
+          {...input}
+          value={value}
+          key={value}
+        />
+        {`${label} - $${value/100}.00`}
+      </label>
+    </div>
+  )
+}
+const DonationSelector = ({ input, meta: { touched, error } }) => (
+  <div className="form-item field">
+    {config.donationLevels.map((selection, key) => getSelections(selection, input, key))}
     {touched && error && <span>{error}</span>}
   </div>
 )
 
-class DonationAmountStep extends Component {
-  constructor(props, state) {
-    super(props, state)
-    this.handleSubmit = this.handleSubmit.bind(this)
-  }
-  handleSubmit(membershipInfo) {
-
-  }
-  render() {
-    <div id="form-step-membership">
-      <form onSubmit={this.handleSubmit}>
-        <div>
-          <label htmlFor="firstName">First Name</label>
-          <Field name="firstName" component="input" type="text"/>
-        </div>
-        <div>
-          <label htmlFor="lastName">Last Name</label>
-          <Field name="lastName" component="input" type="text"/>
-        </div>
-        <div>
-          <label htmlFor="email">Email</label>
-          <Field name="email" component="input" type="email"/>
-        </div>
-        <button type="submit">Next ></button>
-      </form>
-    </div>
-  }
-}
+const DonationAmountStep = (props) => (
+  <WizardStep {...props} {...config.donationWizard.steps.donationAmount}>
+  {console.log(props, config.donationWizard.steps.donationAmount)}
+    {props.formType === 'donation' ? (
+      <Field className="form-item field" name="amount" component={DonationSelector} />
+    ) : (
+      <Field name="amount" component={MembershipSelector} />
+    )}
+  </WizardStep>
+)
 
 export default DonationAmountStep

@@ -2,7 +2,7 @@ import React, { Component } from "react"
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
 import "./wizard.css"
 
-const Wizard = ({ children, location }) => (
+const Wizard = ({ children, location, formType }) => (
   <div>
     <ReactCSSTransitionGroup
       component="div"
@@ -13,7 +13,8 @@ const Wizard = ({ children, location }) => (
       transitionAppearTimeout={500}
     >
       {React.cloneElement(children, {
-        key: location.pathname
+        key: location.pathname,
+        formType
       })}
     </ReactCSSTransitionGroup>
   </div>

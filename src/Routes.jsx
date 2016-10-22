@@ -14,6 +14,22 @@ import DonationAmountStep from './containers/DonationAmountStep'
 
 const history = syncHistoryWithStore(hashHistory, store)
 
+function getDevTools() {
+  if (__DEV__) {
+    const DevTools = require('./containers/DevTools').default;
+    return <DevTools />
+  }
+}
+
+const DonationWizard = (props) => (
+  <Wizard formType="donation" {...props} />
+)
+
+const MembershipWizard = (props) => (
+  <Wizard formType="membership" {...props} />
+)
+
+
 class DonationRoutes extends Component {
   constructor(props, state) {
     super(props, state)
@@ -22,12 +38,15 @@ class DonationRoutes extends Component {
     return (
       <Provider store={store}>
           <Router history={history}>
-            <Route path="/" component={Wizard}>
-              <IndexRedirect to="/profile" />
+            <Route path="/" component={DonationWizard}>
+              <IndexRedirect to="/amount" />
+              <Route path="amount" component={DonationAmountStep} />
               <Route path="profile" component={ProfileStep} />
               <Route path="credit-card" component={CreditCardStep} />
             </Route>
+            {getDevTools()}
           </Router>
+
       </Provider>
     )
   }
@@ -40,9 +59,10 @@ class MembershipRoutes extends Component {
     return (
       <Provider store={store}>
           <Router history={history}>
-            <Route path="/" component={<Wizard formType="membership" />}>
+            <Route path="/" component={MembershipWizard}>
               <IndexRoute component={ProfileStep} />
             </Route>
+            {getDevTools()}
           </Router>
       </Provider>
     )

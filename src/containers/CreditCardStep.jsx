@@ -3,7 +3,8 @@ import { connect } from "react-redux"
 import { reduxForm, Field } from 'redux-form'
 import Card  from 'react-credit-card'
 import { renderInput } from '../components/Fields'
-
+import { push } from 'react-router-redux'
+import invariant from 'invariant'
 import './card.css'
 
 const ccRegex = new RegExp(/^(?:(4[0-9]{12}(?:[0-9]{3})?)|(5[1-5][0-9]{14})|(6(?:011|5[0-9]{2})[0-9]{12})|(3[47][0-9]{13})|(3(?:0[0-5]|[68][0-9])[0-9]{11})|((?:2131|1800|35[0-9]{3})[0-9]{11}))$/)
@@ -30,60 +31,120 @@ const normalizeCC = (value) => {
   return value.replace(/-/g, '')
 }
 
-let CreditCardForm = reduxForm({
+const blockStyle = { display: 'table-cell', width: '50%'}
+
+class CreditCardForm extends Component {
+  constructor(props, state) {
+    super(props, state)
+    this.state = {
+      cvc: false
+    }
+
+    this.toggleCVCOn = this.toggleCVC.bind(this, true)
+    this.toggleCVCOff = this.toggleCVC.bind(this, false)
+  }
+  componentWillMount()   {
+    if (!this.props.signupForm || !this.props.signupForm.values) {
+        this.props.dispatch(push('/profile'))
+    }
+  }
+  toggleCVC(state = false) {
+    this.setState({ cvc: state })
+  }
+  render() {
+    const { signupForm, onSubmit, pristine, submitting} = this.props;
+    let initialValues = { name: '', cvc: '', number: '', expiry: '' }
+    let hasValues = false
+    let displayName
+    if (signupForm && signupForm.values) {
+      hasValues = true
+      const { billingName, firstName, lastName } = signupForm.values
+      displayName = billingName ? billingName : `${firstName} ${lastName}`
+      initialValues = {
+        ...signupForm.values,
+        name: displayName
+      }
+      console.log(initialValues)
+    }
+    return (
+      <div style={{display: "table"}}>
+        <div style={blockStyle}>
+          <Card
+            style={{
+              backgroundColor: "#272727",
+              margin: '0 auto',
+              padding: 12
+            }}
+            focused = {this.state.cvc ? 'cvc' : 'name'}
+            {...initialValues}
+          />
+        </div>
+        <form className="form-wrapper field-list" onSubmit={onSubmit} style={blockStyle}>
+          <div className="field-list">
+            <Field
+              onFocus={this.toggleCVCOff}
+              name="billingName"
+              component={renderInput}
+              type="text"
+              label="Billing Name on Card"
+              value={displayName}
+            />
+            <Field
+              onFocus={this.toggleCVCOff}
+              normalize={normalizeCC}
+              name="number"
+              mask="9999-9999-9999-9999"
+              maskChar="_"
+              component={renderInput}
+              type="text"
+              maxLength="16"
+              label="Number on Card"
+            />
+            <div>
+              <span style={{ display: 'inline-block'}}>
+                <Field
+                  onFocus={this.toggleCVCOff}
+                  name="expiry"
+                  maxLength="5"
+                  mask="99/99"
+                  placeholder="12/16"
+                  component={renderInput}
+                  type="text"
+                  label="Expiration Date"
+                  />
+              </span>
+              <span style={{ display: 'inline-block', width: 50}}>
+                <Field
+                  onFocus={this.toggleCVCOn}
+                  className="field-element"
+                  name="cvc"
+                  maxLength="3"
+                  component={renderInput}
+                  type="text"
+                  label="CVC"
+                  placeholder="123"
+                />
+              </span>
+            </div>
+            <button
+              disabled={pristine || submitting}
+              className="button sqs-system-button sqs-editable-button"
+              type="submit"
+            >
+              Next
+            </button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+}
+
+CreditCardForm = reduxForm({
   form: 'signupForm',           // <------ same form name
   validate: validateCC,
   destroyOnUnmount: false       // <------ validate all fields
-})((props) => {
-  const { onSubmit, pristine, submitting, signupForm } = props
-  return (
-    <div>
-      <div >
-        <Card
-          style={{
-            backgroundColor: "#272727",
-            margin: '0 auto'
-          }}
-          focused = {'name'}
-          name={signupForm.values.billingName || ''}
-          cvc={signupForm.values.cvc || ''}
-          number={signupForm.values.number || ''}
-          expiry={signupForm.values.expiry || ''}
-        />
-      </div>
-      <form className="form-wrapper field-list" onSubmit={onSubmit}>
-        <div className="field-list">
-          <Field className="field-element" name="billingName" component={renderInput} type="text" label="Billing Name on Card"/>
-          <Field className="field-element" normalize={normalizeCC} name="number" mask="9999-9999-9999-9999" maskChar="_" component={renderInput} type="text" maxLength="16" label="Number on Card"/>
-          <div>
-            <span style={{ display: 'inline-block'}}>
-              <Field
-                className="field-element"
-                name="expiry"
-                maxLength="5"
-                mask="99/99"
-                placeholder="12/16"
-                component={renderInput}
-                type="text"
-                label="Expiration Date"
-                />
-            </span>
-            <span style={{ display: 'inline-block', width: 50}}>
-              <Field className="field-element" name="cvc" maxLength="3" component={renderInput} type="text" label="CVC" placeholder="123"/>
-            </span>
-          </div>
-          <button
-            disabled={pristine || submitting}
-            className="button sqs-system-button sqs-editable-button"
-            type="submit"
-          >
-            Next
-          </button>
-        </div>
-      </form>
-    </div>
-  )
-})
+})(CreditCardForm)
 
 CreditCardForm = connect(
   state => {
@@ -104,7 +165,7 @@ class CreditCardStep extends Component {
   render() {
     return (
       <div>
-        <CreditCardForm   handleSubmit={this.handleSubmit} />
+        <CreditCardForm  handleSubmit={this.handleSubmit} />
       </div>
     )
   }
